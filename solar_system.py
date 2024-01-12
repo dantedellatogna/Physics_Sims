@@ -18,13 +18,15 @@ bodies = list()
 
 
 class Bodies:
-    def __init__(self, color, pos, mass, radius, speed):
+    def __init__(self, color, pos, mass, radius, speed, orbit_trail):
         self.color = color
         self.pos = pos
         self.mass = mass * solar_mass
         self.radius = radius
 
         self.speed = speed
+
+        self.orbit_trail = orbit_trail
 
         bodies.append(self)
 
@@ -34,6 +36,22 @@ class Bodies:
         pygame.draw.circle(
             surface=screen, color=self.color, center=[x, y], radius=self.radius
         )
+
+    def draw_orbit(self):
+        for body in bodies[1:]:
+            x = body.pos[0] + width / 2
+            y = body.pos[1] + height / 2
+            body.orbit_trail.append([x, y])
+            prev_orbit = body.orbit_trail[0]
+
+            for orbit in body.orbit_trail:
+                pygame.draw.line(
+                    surface=screen,
+                    color="white",
+                    start_pos=prev_orbit,
+                    end_pos=orbit,
+                )
+                prev_orbit = orbit
 
     def attraction(self, other):
         if self != bodies[0]:
@@ -77,13 +95,14 @@ def main_loop():
         for body in bodies:
             body.attraction(bodies[0])
             body.update_pos()
+            body.draw_orbit()
             body.draw_body()
             print(body.color)
             print(body.pos)
             print(body.speed)
 
         pygame.display.update()
-        clock.tick(120)
+        clock.tick(60)
 
 
 if __name__ == "__main__":
@@ -99,6 +118,7 @@ if __name__ == "__main__":
         mass=1,
         radius=50,
         speed=[0, 0],
+        orbit_trail=[],
     )
 
     earth = Bodies(
@@ -106,7 +126,8 @@ if __name__ == "__main__":
         pos=[0, 400],
         mass=3.0e-6,
         radius=10,
-        speed=[0.1e24, 0],
+        speed=[2.2e23, -0.1e21],
+        orbit_trail=[],
     )
 
     pygame.init()
