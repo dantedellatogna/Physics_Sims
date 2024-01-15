@@ -1,6 +1,7 @@
 import pygame
 import math
 import sys
+import random
 
 # ---COLOR PALETTE (RGB)---
 BLACK = (0, 0, 0)
@@ -20,6 +21,20 @@ TIME = 24 * 3600  # 1 day in seconds
 AU = 149.6e6 * 1000  # Astronomical Unit (meters)
 SCALE = 200 / AU  # 1AU = 100px
 
+
+# --- STARS BACKGROUND ---
+
+stars_bg = list()
+
+
+def stary_sky(width, height):
+    for i in range(0, 900):
+        for j in range(0, 500):
+            n = random.randint(0, 1900)
+            pygame.draw.circle(surface=screen, color=WHITE, center=(n, i), radius=1)
+            stars_bg.append(n, i)
+
+
 # --- ASTRONOMICAL BODIES SIMULATED ---
 bodies = list()
 
@@ -35,12 +50,15 @@ class Bodies:
 
         bodies.append(self)
 
-    def draw_body(self):
+    def get_xy(self):
         x = self.position[0] * SCALE + WIDTH / 2
         y = self.position[1] * SCALE + HEIGHT / 2
+        return (x, y)
 
+    def draw_orbit(self):
+        x, y = self.get_xy()
         # Drawing orbit lines
-        self.orbit_trail.append([x, y])
+        self.orbit_trail.append((x, y))
         prev_orbit = self.orbit_trail[0]
 
         for orbit in self.orbit_trail:
@@ -53,28 +71,32 @@ class Bodies:
             )
             prev_orbit = orbit
 
+    def draw_body(self):
+        x, y = self.get_xy()
         # Drawing bodies
         pygame.draw.circle(
             surface=screen, color=self.color, center=[x, y], radius=self.radius
         )
 
-    def attraction(self, other):
-        if self != bodies[0]:
-            x_distance = other.position[0] - self.position[0]
-            y_distance = other.position[1] - self.position[1]
+    def attraction(self, bodies):
+        for other in bodies:
+            if self != other:
+                x_distance = other.position[0] - self.position[0]
+                y_distance = other.position[1] - self.position[1]
 
-            r = math.sqrt(x_distance**2 + y_distance**2)
-            F = G * self.mass * other.mass / r**2
+                r = math.sqrt(x_distance**2 + y_distance**2)
+                F = G * self.mass * other.mass / r**2
 
-            angle = math.atan2(y_distance, x_distance)
-            Fx = F * math.cos(angle)
-            Fy = F * math.sin(angle)
+                angle = math.atan2(y_distance, x_distance)
+                Fx = F * math.cos(angle)
+                Fy = F * math.sin(angle)
 
-            past_speed = self.speed
-            self.speed[0] = (Fx * TIME) / self.mass + past_speed[0]
-            self.speed[1] = (Fy * TIME) / self.mass + past_speed[1]
+                past_speed = self.speed
+                self.speed[0] = (Fx * TIME) / self.mass + past_speed[0]
+                self.speed[1] = (Fy * TIME) / self.mass + past_speed[1]
 
     def update_position(self):
+        self.attraction(bodies)
         self.position[0] = self.position[0] + TIME * self.speed[0]
         self.position[1] = self.position[1] + TIME * self.speed[1]
 
@@ -89,8 +111,8 @@ def main_loop():
         screen.fill(BLACK)
 
         for body in bodies:
-            body.attraction(bodies[0])
             body.update_position()
+            body.draw_orbit()
             body.draw_body()
 
         pygame.display.update()
@@ -135,6 +157,15 @@ if __name__ == "__main__":
         speed=[0, -47.4 * 1000],
         orbit_trail=[],
     )
+
+    """sun2 = Bodies(
+        color=WHITE,
+        position=[6 * AU, 3 * AU],
+        mass=1.988e30,
+        radius=50,
+        speed=[-47.4 * 1000, -47.4 * 1000],
+        orbit_trail=[],
+    )"""
 
     # Pygame initializations
     pygame.init()
