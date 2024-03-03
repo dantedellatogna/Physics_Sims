@@ -11,6 +11,15 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 
+MERCURY = (122, 111, 43)
+VENUS = (156, 96, 36)
+EARTH = (43, 44, 122)
+MARS = (156, 60, 36)
+JUPITER = (217, 140, 95)
+SATURN = (227, 191, 125)
+URANUS = (112, 212, 210)
+NEPTUNE = (182, 227, 226)
+
 # --- WINDOW SIZE ---
 WIDTH = 1900
 HEIGHT = 900
@@ -19,7 +28,7 @@ HEIGHT = 900
 G = 6.674e-11  # Gravitational constant
 TIME = 24 * 3600  # 1 day in seconds
 AU = 149.6e6 * 1000  # Astronomical Unit (meters)
-SCALE = 200 / AU  # 1AU = 100px
+SCALE = 100 / AU  # 1AU = 100px
 
 
 # --- STARS BACKGROUND ---
@@ -28,15 +37,28 @@ stars_bg = list()
 
 
 def stary_sky(width, height):
-    for i in range(0, 900):
-        for j in range(0, 500):
-            n = random.randint(0, 1900)
-            pygame.draw.circle(surface=screen, color=WHITE, center=(n, i), radius=1)
-            stars_bg.append(n, i)
+    if len(stars_bg) == 0:
+        for i in range(0, 900, 1):
+            for j in range(0, 1):
+                n = random.randint(0, 1900)
+                stars_bg.append((n, i))
+
+    for star_pos in stars_bg:
+        pygame.draw.circle(surface=screen, color=WHITE, center=star_pos, radius=1)
 
 
 # --- ASTRONOMICAL BODIES SIMULATED ---
 bodies = list()
+
+
+def lineLength(pos1, pos2):
+    x1, y1 = pos1
+    x2, y2 = pos2
+    # length = sqrt((x2 - x1)^2 + (y2 - y1)^2)
+    x_sqrd = (x2 - x1) * (x2 - x1)
+    y_sqrd = (y2 - y1) * (y2 - y1)
+    length = math.sqrt(x_sqrd + y_sqrd)
+    return length
 
 
 class Bodies:
@@ -64,12 +86,15 @@ class Bodies:
         for orbit in self.orbit_trail:
             pygame.draw.line(
                 surface=screen,
-                color=WHITE,
+                color=self.color,
                 start_pos=prev_orbit,
                 end_pos=orbit,
                 width=1,
             )
             prev_orbit = orbit
+
+        if len(self.orbit_trail) > 10000:
+            self.orbit_trail.pop(0)
 
     def draw_body(self):
         x, y = self.get_xy()
@@ -100,6 +125,20 @@ class Bodies:
         self.position[0] = self.position[0] + TIME * self.speed[0]
         self.position[1] = self.position[1] + TIME * self.speed[1]
 
+    def write_speed_txt(self):
+        x, y = self.get_xy()
+        font = pygame.font.SysFont("consolas", 14)
+        speed = math.sqrt(self.speed[0] ** 2 + self.speed[1] ** 2)
+        speed = speed / 1000
+        speed_txt = font.render(f"{round(speed, 2)} km/s", 1, WHITE)
+        screen.blit(
+            speed_txt,
+            (
+                x - speed_txt.get_width() / 2,
+                (y - speed_txt.get_height() / 2) - self.radius - 10,
+            ),
+        )
+
 
 def main_loop():
     while True:
@@ -108,12 +147,19 @@ def main_loop():
                 pygame.quit()
                 sys.exit()
 
+            # --- Stop planet - Method call (Testing) ---
+            # if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            # Call the on_mouse_button_down() function
+
+        # Background
         screen.fill(BLACK)
+        stary_sky(WIDTH, HEIGHT)  # stars (random)
 
         for body in bodies:
             body.update_position()
             body.draw_orbit()
             body.draw_body()
+            body.write_speed_txt()
 
         pygame.display.update()
         clock.tick(60)
@@ -125,13 +171,31 @@ if __name__ == "__main__":
         color=YELLOW,
         position=[0, 0],
         mass=1.988e30,
-        radius=50,
+        radius=30,
         speed=[0, 0],
         orbit_trail=[],
     )
 
+    mercury = Bodies(
+        color=MERCURY,
+        position=[0.387 * AU, 0],
+        mass=3.30e23,
+        radius=5,
+        speed=[0, -47.4 * 1000],
+        orbit_trail=[],
+    )
+
+    venus = Bodies(
+        color=VENUS,
+        position=[0.72 * AU, 0],
+        mass=4.867e24,
+        radius=10,
+        speed=[0, -35.02 * 1000],
+        orbit_trail=[],
+    )
+
     earth = Bodies(
-        color=BLUE,
+        color=EARTH,
         position=[1 * AU, 0],
         mass=5.972e24,
         radius=12,
@@ -141,20 +205,29 @@ if __name__ == "__main__":
     )
 
     mars = Bodies(
-        color=RED,
+        color=MARS,
         position=[1.524 * AU, 0],
         mass=6.39e23,
-        radius=10,
+        radius=7,
         speed=[0, -24.077 * 1000],
         orbit_trail=[],
     )
 
-    mercury = Bodies(
-        color=GREEN,
-        position=[0.387 * AU, 0],
-        mass=3.30e23,
-        radius=8,
-        speed=[0, -47.4 * 1000],
+    jupiter = Bodies(
+        color=JUPITER,
+        position=[5.2 * AU, 0],
+        mass=1.89813e27,
+        radius=20,
+        speed=[0, -13.06 * 1000],
+        orbit_trail=[],
+    )
+
+    saturn = Bodies(
+        color=SATURN,
+        position=[9.538 * AU, 0],
+        mass=5.6832e26,
+        radius=18,
+        speed=[0, -9.67 * 1000],
         orbit_trail=[],
     )
 

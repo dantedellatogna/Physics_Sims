@@ -1,49 +1,60 @@
 import pygame
-import sys
-
-# Create a surface for the button
-button_surface = pygame.Surface((100, 50))
-
-# Draw the button's text and border on the surface
-pygame.draw.rect(button_surface, (0, 0, 0), (0, 0, 100, 50))
-pygame.draw.rect(button_surface, (255, 255, 255), (1, 1, 98, 48))
-pygame.draw.rect(button_surface, (0, 0, 0), (1, 1, 98, 1), 2)
-pygame.draw.rect(button_surface, (0, 0, 0), (1, 48, 98, 1), 2)
-# pygame.draw.text(button_surface, "Click Me!", (25, 25), (255, 255, 255))
-
-# Create a pygame.Rect object that represents the button's boundaries
-button_rect = pygame.Rect(0, 0, 100, 50)
 
 
-# Create a pygame.event.MOUSEBUTTONDOWN event handler that checks if the mouse is clicked inside the button's boundaries
-def on_mouse_button_down(event):
-    if (
-        event.type == pygame.MOUSEBUTTONDOWN
-        and event.button == 1
-        and button_rect.collidepoint(event.pos)
-    ):
-        print("Button clicked!")
+class SpriteObject(pygame.sprite.Sprite):
+    def __init__(self, x, y, color):
+        super().__init__()
+        self.original_image = pygame.Surface((50, 50), pygame.SRCALPHA)
+        pygame.draw.circle(self.original_image, color, (25, 25), 25)
+        self.hover_image = pygame.Surface((50, 50), pygame.SRCALPHA)
+        pygame.draw.circle(self.hover_image, color, (25, 25), 25)
+        pygame.draw.circle(self.hover_image, (255, 255, 255), (25, 25), 25, 4)
+        self.image = self.original_image
+        self.rect = self.image.get_rect(center=(x, y))
+        self.hover = False
+
+    def update(self):
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_buttons = pygame.mouse.get_pressed()
+
+        # self.hover = self.rect.collidepoint(mouse_pos)
+        self.hover = self.rect.collidepoint(mouse_pos) and any(mouse_buttons)
+
+        self.image = self.hover_image if self.hover else self.original_image
 
 
-# Call the pygame.display.update() function to display the button on the screen
-pygame.display.update()
+pygame.init()
+window = pygame.display.set_mode((300, 300))
+clock = pygame.time.Clock()
 
-# Start the main loop
-while True:
-    # Get events from the event queue
+sprite_object = SpriteObject(*window.get_rect().center, (128, 128, 0))
+group = pygame.sprite.Group(
+    [
+        SpriteObject(window.get_width() // 3, window.get_height() // 3, (128, 0, 0)),
+        SpriteObject(
+            window.get_width() * 2 // 3, window.get_height() // 3, (0, 128, 0)
+        ),
+        SpriteObject(
+            window.get_width() // 3, window.get_height() * 2 // 3, (0, 0, 128)
+        ),
+        SpriteObject(
+            window.get_width() * 2 // 3, window.get_height() * 2 // 3, (128, 128, 0)
+        ),
+    ]
+)
+
+run = True
+while run:
+    clock.tick(60)
     for event in pygame.event.get():
-        # Check for the quit event
         if event.type == pygame.QUIT:
-            # Quit the game
-            pygame.quit()
-            sys.exit()
+            run = False
 
-        # Check for the mouse button down event
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            # Call the on_mouse_button_down() function
-            on_mouse_button_down(event)
+    group.update()
 
-    # Update the game state
+    window.fill(0)
+    group.draw(window)
+    pygame.display.flip()
 
-    # Draw the game screen
-    pygame.display.update()
+pygame.quit()
+exit()
