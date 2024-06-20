@@ -21,8 +21,8 @@ URANUS = (112, 212, 210)
 NEPTUNE = (182, 227, 226)
 
 # --- WINDOW SIZE ---
-WIDTH = 1900
-HEIGHT = 900
+WIDTH = 800
+HEIGHT = 600
 
 # --- PHYSICS SIMULATION CONSTANTS ---
 G = 6.674e-11  # Gravitational constant
@@ -98,9 +98,11 @@ class Bodies:
 
     def draw_body(self):
         x, y = self.get_xy()
+
+        scale_radius = self.radius * SCALE * 10e8
         # Drawing bodies
         pygame.draw.circle(
-            surface=screen, color=self.color, center=[x, y], radius=self.radius
+            surface=screen, color=self.color, center=[x, y], radius=scale_radius
         )
 
     def attraction(self, bodies):
@@ -141,11 +143,23 @@ class Bodies:
 
 
 def main_loop():
+    global SCALE
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
+            if event.type == pygame.MOUSEWHEEL:
+                if event.y > 0:
+                    SCALE += 10 / AU
+                elif event.y < 0:
+                    SCALE -= 10 / AU
+
+                if SCALE < 0:
+                    SCALE = 0
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                print("Mouse pressed.")
 
             # --- Stop planet - Method call (Testing) ---
             # if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -157,7 +171,7 @@ def main_loop():
 
         for body in bodies:
             body.update_position()
-            body.draw_orbit()
+            # body.draw_orbit()
             body.draw_body()
             body.write_speed_txt()
 
@@ -231,6 +245,25 @@ if __name__ == "__main__":
         orbit_trail=[],
     )
 
+    uranus = Bodies(
+        color=URANUS,
+        position=[19.165 * AU, 0],
+        mass=86.811e24,
+        radius=17,
+        speed=[0, -7.13 * 1000],
+        orbit_trail=[],
+    )
+
+    neptune = Bodies(
+        color=NEPTUNE,
+        position=[30.1806 * AU, 0],
+        mass=102.409e24,
+        radius=16,
+        speed=[0, -5.45 * 1000],
+        orbit_trail=[],
+    )
+
+    # TEST BODIES
     """sun2 = Bodies(
         color=WHITE,
         position=[6 * AU, 3 * AU],
@@ -239,6 +272,18 @@ if __name__ == "__main__":
         speed=[-47.4 * 1000, -47.4 * 1000],
         orbit_trail=[],
     )"""
+
+    """
+    moon = Bodies(
+        color=WHITE,
+        position=[0.2569555e-3 * AU + earth.position[0], 0],
+        mass=0.07346e24,
+        # mass=0.000001,
+        radius=3,
+        speed=[0, -1.022 * 1000 + earth.speed[1]],
+        orbit_trail=[],
+    )
+    """
 
     # Pygame initializations
     pygame.init()
