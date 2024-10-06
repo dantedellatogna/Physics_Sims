@@ -35,6 +35,11 @@ SCALE = 100 / AU  # 1AU = 100px
 
 stars_bg = list()
 
+# --- CAMERA OFFSET ---
+cameraOffset = [0, 0]
+origin = (WIDTH / 2, HEIGHT / 2)
+center = [origin[0], origin[1]]
+
 
 def stary_sky(width, height):
     if len(stars_bg) == 0:
@@ -123,9 +128,12 @@ class Bodies:
                 self.speed[1] = (Fy * TIME) / self.mass + past_speed[1]
 
     def update_position(self):
+        global cameraOffset
         self.attraction(bodies)
-        self.position[0] = self.position[0] + TIME * self.speed[0]
+        self.position[0] = (self.position[0] + TIME * self.speed[0]) + cameraOffset[0]
         self.position[1] = self.position[1] + TIME * self.speed[1]
+
+        # print(cameraOffset[0])  # ---------------------
 
     def write_speed_txt(self):
         x, y = self.get_xy()
@@ -144,12 +152,19 @@ class Bodies:
 
 def main_loop():
     global SCALE
+    global cameraOffset
+
+    origin = (0, 0)
+
     while True:
         for event in pygame.event.get():
+            mousexy = pygame.mouse.get_pos()
+            mousebttn = pygame.mouse.get_pressed()
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
+            # ZOOM
             if event.type == pygame.MOUSEWHEEL:
                 if event.y > 0:
                     SCALE += 10 / AU
@@ -158,8 +173,21 @@ def main_loop():
 
                 if SCALE < 0:
                     SCALE = 0
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                print("Mouse pressed.")
+
+            # CAMERA
+            if mousebttn[0] == True:
+                cameraOffset[0] += 10e5 * (mousexy[0] - 400)
+                # print(cameraOffset[0])
+                print(mousexy[0])
+            if mousebttn[0] == False:
+                cameraOffset[0] = 0
+                # print(cameraOffset[0])
+                print(mousexy[0])
+
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    cameraOffset[0] = 0
+                    # print(cameraOffset[0])
 
             # --- Stop planet - Method call (Testing) ---
             # if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -280,7 +308,7 @@ if __name__ == "__main__":
         mass=0.07346e24,
         # mass=0.000001,
         radius=3,
-        speed=[0, -1.022 * 1000 + earth.speed[1]],
+        speed=[0, earth.speed[1]],
         orbit_trail=[],
     )
     """
